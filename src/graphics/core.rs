@@ -127,8 +127,6 @@ impl GeoCore {
 
             match event {
                 Event::RedrawRequested(ref window_id) => {
-                    eprintln!("window redraw {window_id:?}");
-
                     let window = windows.get(window_id).unwrap();
 
                     let gl = &window.gl;
@@ -151,8 +149,6 @@ impl GeoCore {
 
                     match event {
                         WindowEvent::Resized(physical_size) => {
-                            eprintln!("window resized {window_id:?}");
-
                             window.gl_surface.resize(
                                 &window.gl_ctx,
                                 NonZeroU32::new(physical_size.width).unwrap(),
@@ -172,8 +168,6 @@ impl GeoCore {
                             is_synthetic: false,
                             ..
                         } => {
-                            eprintln!("Closing window {window_id:?}");
-
                             // This drops the window, causing it to close.
                             windows.remove(window_id);
 

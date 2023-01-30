@@ -1,7 +1,28 @@
 //! GeoWindow
 
+use std::ops::{Deref, DerefMut};
+
+use glutin::context::PossiblyCurrentContext;
+use glutin::surface::{Surface, WindowSurface};
 use winit::window::Window;
 
 pub struct GeoWindow {
+    pub(crate) gl: glow::Context,
+    pub(crate) gl_ctx: PossiblyCurrentContext,
+    pub(crate) gl_surface: Surface<WindowSurface>,
     pub(crate) window: Window,
+}
+
+impl Deref for GeoWindow {
+    type Target = Window;
+
+    fn deref(&self) -> &Self::Target {
+        &self.window
+    }
+}
+
+impl DerefMut for GeoWindow {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.window
+    }
 }

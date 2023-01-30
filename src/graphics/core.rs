@@ -102,8 +102,6 @@ impl GeoCore {
             })
         };
 
-        window.request_redraw();
-
         let id = window.id();
         let geo_window = GeoWindow {
             gl,
@@ -112,8 +110,21 @@ impl GeoCore {
             window,
         };
 
+        Self::redraw_window(&geo_window);
+
         self.windows.insert(id, geo_window);
         self.windows.get(&id).unwrap()
+    }
+
+    fn redraw_window(window: &GeoWindow) {
+        let gl = &window.gl;
+        unsafe {
+            gl.clear_color(0.1, 0.2, 0.3, 1.0);
+            gl.clear(glow::COLOR_BUFFER_BIT);
+        }
+
+        window.gl_ctx.make_current(&window.gl_surface).unwrap();
+        window.gl_surface.swap_buffers(&window.gl_ctx).unwrap();
     }
 
     pub fn run(self) -> ! {
@@ -128,15 +139,7 @@ impl GeoCore {
             match event {
                 Event::RedrawRequested(ref window_id) => {
                     let window = windows.get(window_id).unwrap();
-
-                    let gl = &window.gl;
-                    unsafe {
-                        gl.clear_color(0.1, 0.2, 0.3, 1.0);
-                        gl.clear(glow::COLOR_BUFFER_BIT);
-                    }
-
-                    window.gl_ctx.make_current(&window.gl_surface).unwrap();
-                    window.gl_surface.swap_buffers(&window.gl_ctx).unwrap();
+                    Self::redraw_window(window);
                 }
 
                 Event::WindowEvent {

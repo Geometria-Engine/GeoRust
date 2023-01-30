@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::Graphics::window::GeoWindow;
+use crate::graphics::window::GeoWindow;
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
 use winit::event_loop::EventLoop;
@@ -39,7 +39,7 @@ impl GeoCore {
         let id = window.id();
         self.windows.insert(id, GeoWindow { window });
 
-        self.windows.get(&id).unwrap();
+        self.windows.get(&id).unwrap()
     }
 
     pub fn run(self) -> ! {

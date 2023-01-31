@@ -80,7 +80,7 @@ impl GeoCore {
     fn create_opengl_context(
         dimensions: PhysicalSize<u32>,
         raw_window_handle: raw_window_handle::RawWindowHandle,
-        gl_config: glutin::config::Config,
+        gl_config: &glutin::config::Config,
         context_attributes: glutin::context::ContextAttributes,
     ) -> (
         glutin::surface::Surface<glutin::surface::WindowSurface>,
@@ -95,9 +95,9 @@ impl GeoCore {
         );
 
         // Lots of unwraps there... Will be way better once there's proper error handling
-        let surface = unsafe { gl_display.create_window_surface(&gl_config, &attrs) }.unwrap();
+        let surface = unsafe { gl_display.create_window_surface(gl_config, &attrs) }.unwrap();
 
-        let context = unsafe { gl_display.create_context(&gl_config, &context_attributes) }
+        let context = unsafe { gl_display.create_context(gl_config, &context_attributes) }
             .unwrap()
             .make_current(&surface)
             .unwrap();
@@ -116,7 +116,7 @@ impl GeoCore {
         let (gl_surface, gl_ctx) = Self::create_opengl_context(
             window.inner_size(),
             raw_window_handle,
-            gl_config.clone(),
+            &gl_config,
             context_attributes,
         );
 

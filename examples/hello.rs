@@ -9,7 +9,7 @@ fn main() {
 
     let _geo_window = core.create_window("hello 1", 1280, 720);
 
-    AppMain::Init();
+    AppMain::init();
 
     core.run();
 }

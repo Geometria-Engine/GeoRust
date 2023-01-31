@@ -1,7 +1,7 @@
 pub struct AppMain {}
 
 impl AppMain {
-    pub fn Init() {
+    pub fn init() {
         println!("Hello World!");
     }
 }

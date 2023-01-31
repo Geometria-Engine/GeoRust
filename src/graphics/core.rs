@@ -10,7 +10,6 @@ use glutin::context::{ContextApi, ContextAttributesBuilder, Version};
 use glutin::display::GetGlDisplay;
 use glutin::prelude::{
     GlConfig, GlDisplay, NotCurrentGlContextSurfaceAccessor,
-    PossiblyCurrentContextGlSurfaceAccessor,
 };
 use glutin::surface::{GlSurface, SurfaceAttributesBuilder};
 use glutin_winit::ApiPrefence;
@@ -48,14 +47,18 @@ impl GeoCore {
         }
     }
 
-    pub fn create_window(&mut self, title: &str, width: u32, height: u32) -> &GeoWindow {
-        // TODO: proper error handling
-
+    fn winit_window_builder(title: &str, width: u32, height: u32) -> WindowBuilder
+    {
         let window_builder = WindowBuilder::new()
             .with_resizable(true)
             .with_inner_size(PhysicalSize::new(width, height))
             .with_title(title);
 
+        return window_builder;
+    }
+
+    fn glutin_display(&self, window_builder: WindowBuilder) -> (Option<winit::window::Window>, glutin::config::Config)
+    {
         let (window, gl_config) = glutin_winit::DisplayBuilder::new()
             .with_preference(ApiPrefence::FallbackEgl)
             .with_window_builder(Some(window_builder))
@@ -67,16 +70,26 @@ impl GeoCore {
             })
             .expect("Couldn't build window display.");
 
-        let window = window.unwrap(); // set in display builder
-        let raw_window_handle = window.raw_window_handle();
-        let gl_display = gl_config.display();
+        return (window, gl_config);
+    }
 
+    fn setup_opengl_properties(raw_window_handle: raw_window_handle::RawWindowHandle) -> glutin::context::ContextAttributes
+    {
         let context_attributes = ContextAttributesBuilder::new()
-            .with_context_api(ContextApi::OpenGl(Some(Version::new(3, 1))))
+            .with_context_api(ContextApi::OpenGl(Some(Version::new(2, 1))))
             .with_profile(glutin::context::GlProfile::Core)
             .build(Some(raw_window_handle));
 
-        let dimensions = window.inner_size();
+        return context_attributes;
+    }
+
+    fn create_opengl_context(
+        dimensions: PhysicalSize<u32>,
+        raw_window_handle: raw_window_handle::RawWindowHandle, 
+        gl_config: glutin::config::Config, 
+        context_attributes: glutin::context::ContextAttributes) -> (glutin::surface::Surface<glutin::surface::WindowSurface>, glutin::context::PossiblyCurrentContext)
+    {
+        let gl_display = gl_config.display();
 
         let (gl_surface, gl_ctx) = {
             let attrs = SurfaceAttributesBuilder::<glutin::surface::WindowSurface>::new().build(
@@ -95,6 +108,26 @@ impl GeoCore {
             (surface, context)
         };
 
+        return (gl_surface, gl_ctx);
+    }
+
+    pub fn create_window(&mut self, title: &str, width: u32, height: u32) -> &GeoWindow 
+    {
+        // TODO: proper error handling
+
+        let window_builder = Self::winit_window_builder(title, width, height);
+
+        let (window, gl_config) = Self::glutin_display(&self, window_builder);
+
+        let window = window.unwrap(); // set in display builder
+        let raw_window_handle = window.raw_window_handle();
+
+        let context_attributes = Self::setup_opengl_properties(raw_window_handle);
+
+        let (gl_surface, gl_ctx) = Self::create_opengl_context(window.inner_size(), raw_window_handle, gl_config.clone(), context_attributes);
+
+        let gl_display = gl_config.display();
+
         // Load the OpenGL function pointers
         let gl = unsafe {
             glow::Context::from_loader_function(|symbol| {
@@ -110,24 +143,27 @@ impl GeoCore {
             window,
         };
 
-        Self::redraw_window(&geo_window);
+        Self::draw(&geo_window);
 
         self.windows.insert(id, geo_window);
         self.windows.get(&id).unwrap()
     }
 
-    fn redraw_window(window: &GeoWindow) {
+    fn draw(window: &GeoWindow) 
+    {
+
         let gl = &window.gl;
         unsafe {
             gl.clear_color(0.1, 0.2, 0.3, 1.0);
             gl.clear(glow::COLOR_BUFFER_BIT);
         }
 
-        window.gl_ctx.make_current(&window.gl_surface).unwrap();
-        window.gl_surface.swap_buffers(&window.gl_ctx).unwrap();
+        window.swap_buffers();
+        
     }
 
     pub fn run(self) -> ! {
+
         let GeoCore {
             event_loop,
             mut windows,
@@ -139,7 +175,7 @@ impl GeoCore {
             match event {
                 Event::RedrawRequested(ref window_id) => {
                     let window = windows.get(window_id).unwrap();
-                    Self::redraw_window(window);
+                    Self::draw(window);
                 }
 
                 Event::WindowEvent {

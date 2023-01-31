@@ -46,19 +46,17 @@ impl GeoCore {
     }
 
     fn winit_window_builder(title: &str, width: u32, height: u32) -> WindowBuilder {
-        let window_builder = WindowBuilder::new()
+        WindowBuilder::new()
             .with_resizable(true)
             .with_inner_size(PhysicalSize::new(width, height))
-            .with_title(title);
-
-        return window_builder;
+            .with_title(title)
     }
 
     fn glutin_display(
         &self,
         window_builder: WindowBuilder,
     ) -> (Option<winit::window::Window>, glutin::config::Config) {
-        let (window, gl_config) = glutin_winit::DisplayBuilder::new()
+        glutin_winit::DisplayBuilder::new()
             .with_preference(ApiPrefence::FallbackEgl)
             .with_window_builder(Some(window_builder))
             .build(&self.event_loop, <_>::default(), |configs| {
@@ -67,20 +65,16 @@ impl GeoCore {
                     .max_by_key(|c| c.num_samples())
                     .unwrap()
             })
-            .expect("Couldn't build window display.");
-
-        return (window, gl_config);
+            .expect("Couldn't build window display.")
     }
 
     fn setup_opengl_properties(
         raw_window_handle: raw_window_handle::RawWindowHandle,
     ) -> glutin::context::ContextAttributes {
-        let context_attributes = ContextAttributesBuilder::new()
+        ContextAttributesBuilder::new()
             .with_context_api(ContextApi::OpenGl(Some(Version::new(2, 1))))
             .with_profile(glutin::context::GlProfile::Core)
-            .build(Some(raw_window_handle));
-
-        return context_attributes;
+            .build(Some(raw_window_handle))
     }
 
     fn create_opengl_context(
@@ -94,38 +88,31 @@ impl GeoCore {
     ) {
         let gl_display = gl_config.display();
 
-        let (gl_surface, gl_ctx) = {
-            let attrs = SurfaceAttributesBuilder::<glutin::surface::WindowSurface>::new().build(
-                raw_window_handle,
-                NonZeroU32::new(dimensions.width).unwrap(),
-                NonZeroU32::new(dimensions.height).unwrap(),
-            );
+        let attrs = SurfaceAttributesBuilder::<glutin::surface::WindowSurface>::new().build(
+            raw_window_handle,
+            NonZeroU32::new(dimensions.width).unwrap(),
+            NonZeroU32::new(dimensions.height).unwrap(),
+        );
 
-            // Lots of unwraps there... Will be way better once there's proper error handling
-            let surface = unsafe { gl_display.create_window_surface(&gl_config, &attrs) }.unwrap();
+        // Lots of unwraps there... Will be way better once there's proper error handling
+        let surface = unsafe { gl_display.create_window_surface(&gl_config, &attrs) }.unwrap();
 
-            let context = unsafe { gl_display.create_context(&gl_config, &context_attributes) }
-                .unwrap()
-                .make_current(&surface)
-                .unwrap();
-            (surface, context)
-        };
+        let context = unsafe { gl_display.create_context(&gl_config, &context_attributes) }
+            .unwrap()
+            .make_current(&surface)
+            .unwrap();
 
-        return (gl_surface, gl_ctx);
+        (surface, context)
     }
 
     pub fn create_window(&mut self, title: &str, width: u32, height: u32) -> &GeoWindow {
         // TODO: proper error handling
 
         let window_builder = Self::winit_window_builder(title, width, height);
-
-        let (window, gl_config) = Self::glutin_display(&self, window_builder);
-
+        let (window, gl_config) = Self::glutin_display(self, window_builder);
         let window = window.unwrap(); // set in display builder
         let raw_window_handle = window.raw_window_handle();
-
         let context_attributes = Self::setup_opengl_properties(raw_window_handle);
-
         let (gl_surface, gl_ctx) = Self::create_opengl_context(
             window.inner_size(),
             raw_window_handle,

@@ -3,10 +3,10 @@
 use std::ops::{Deref, DerefMut};
 
 use glutin::context::PossiblyCurrentContext;
-use glutin::surface::{Surface, WindowSurface};
-use winit::window::Window;
 use glutin::context::PossiblyCurrentContextGlSurfaceAccessor;
 use glutin::prelude::GlSurface;
+use glutin::surface::{Surface, WindowSurface};
+use winit::window::Window;
 
 pub struct GeoWindow {
     pub(crate) gl: glow::Context,
@@ -29,11 +29,9 @@ impl DerefMut for GeoWindow {
     }
 }
 
-impl GeoWindow
-{
-    pub fn swap_buffers(&self)
-    {
+impl GeoWindow {
+    pub fn swap_buffers(&self) {
         self.gl_ctx.make_current(&self.gl_surface).unwrap();
-        self.gl_surface.swap_buffers(&self.gl_ctx).unwrap();    
+        self.gl_surface.swap_buffers(&self.gl_ctx).unwrap();
     }
 }

@@ -17,6 +17,8 @@ use winit::event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEve
 use winit::event_loop::EventLoop;
 use winit::window::{WindowBuilder, WindowId};
 
+use crate::behavior::behaviorCore::update_scripts;
+
 static CORE_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 pub struct GeoCore {
@@ -145,6 +147,7 @@ impl GeoCore {
 
     fn draw(window: &GeoWindow) {
         let gl = &window.gl;
+
         unsafe {
             gl.clear_color(0.1, 0.2, 0.3, 1.0);
             gl.clear(glow::COLOR_BUFFER_BIT);
@@ -160,12 +163,22 @@ impl GeoCore {
         } = self;
 
         event_loop.run(move |event, _event_loop, control_flow| {
-            control_flow.set_wait();
+            control_flow.set_poll();
+            //control_flow.set_wait();
 
             match event {
                 Event::RedrawRequested(ref window_id) => {
+                    update_scripts();
+
                     let window = windows.get(window_id).unwrap();
                     Self::draw(window);
+                },
+
+                Event::MainEventsCleared => {
+
+                    for (id, window) in &windows {
+                        window.request_redraw();
+                    }
                 }
 
                 Event::WindowEvent {

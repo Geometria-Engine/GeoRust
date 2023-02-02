@@ -5,6 +5,7 @@ use std::num::NonZeroU32;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::graphics::window::GeoWindow;
+use crate::script::Script;
 use glow::HasContext;
 use glutin::context::{ContextApi, ContextAttributesBuilder, Version};
 use glutin::display::GetGlDisplay;
@@ -17,13 +18,12 @@ use winit::event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEve
 use winit::event_loop::EventLoop;
 use winit::window::{WindowBuilder, WindowId};
 
-use crate::behavior::behaviorCore::update_scripts;
-
 static CORE_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 pub struct GeoCore {
     event_loop: EventLoop<()>,
     windows: HashMap<WindowId, GeoWindow>,
+    scripts: Vec<Box<dyn Script>>,
 }
 
 impl GeoCore {
@@ -44,7 +44,12 @@ impl GeoCore {
         Self {
             event_loop,
             windows: HashMap::new(),
+            scripts: Vec::new(),
         }
+    }
+
+    pub fn add_script<S: Script + 'static>(&mut self, script: S) {
+        self.scripts.push(Box::new(script));
     }
 
     fn winit_window_builder(title: &str, width: u32, height: u32) -> WindowBuilder {
@@ -160,23 +165,28 @@ impl GeoCore {
         let GeoCore {
             event_loop,
             mut windows,
+            mut scripts,
         } = self;
+
+        for script in scripts.iter_mut() {
+            script.on_start();
+        }
 
         event_loop.run(move |event, _event_loop, control_flow| {
             control_flow.set_poll();
-            //control_flow.set_wait();
 
             match event {
                 Event::RedrawRequested(ref window_id) => {
-                    update_scripts();
+                    for script in scripts.iter_mut() {
+                        script.on_update();
+                    }
 
                     let window = windows.get(window_id).unwrap();
                     Self::draw(window);
-                },
+                }
 
                 Event::MainEventsCleared => {
-
-                    for (id, window) in &windows {
+                    for window in windows.values() {
                         window.request_redraw();
                     }
                 }

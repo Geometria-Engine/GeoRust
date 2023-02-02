@@ -3,18 +3,24 @@ use geometria::script::Script;
 
 fn main() {
     let mut core = GeoCore::init();
-    core.add_script(BallContainer { balls: 69 });
+    core.add_script(BallScript::new());
 
     let _geo_window = core.create_window("hello 1", 1280, 720);
 
     core.run();
 }
 
-struct BallContainer {
+struct BallScript {
     balls: u32,
 }
 
-impl Script for BallContainer {
+impl BallScript {
+    fn new() -> Self {
+        Self { balls: 69 }
+    }
+}
+
+impl Script for BallScript {
     fn on_start(&mut self) {
         println!("I Start with {} balls!", self.balls);
     }
